@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculos de bolsas con IA</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .btn-delete {
+            color: white;
+            background-color: red;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .btn-calculate {
+            color: white;
+            background-color: green;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cálculos de bolsas con IA</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" />
+    <div id="tableContainer"></div>
+    <button class="btn-calculate" id="calculateBtn">Calcular con IA</button>
+
+    <script>
+        let tableData = [];
+
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetName[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                displayTable(jsonData);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        function displayTable(data) {
+            tableData = data;
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = "";
+
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            const headers = [
+                ...data[0],
+                "Es impreso?",
+                "Calibre",
+                "Tamaño de Bobina",
+                "Peso por Millar",
+                "Peso Requerido",
+                "Metros Requeridos",
+                "Acciones"
+            ];
+
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            data.slice(1).forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+
+                const printTd = document.createElement('td');
+                const select = document.createElement('select');
+                select.innerHTML = `<option value="No">No</option><option value="Si">Si</option>`;
+                printTd.appendChild(select);
+                tr.appendChild(printTd);
+
+                ["Calibre", "Tamaño de Bobina", "Peso por Millar", "Peso Requerido", "Metros Requeridos"].forEach(() => {
+                    const calcTd = document.createElement('td');
+                    calcTd.textContent = "";
+                    tr.appendChild(calcTd);
+                });
+
+                const actionTd = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = "Eliminar";
+                deleteButton.className = "btn-delete";
+                deleteButton.addEventListener('click', () => tr.remove());
+                actionTd.appendChild(deleteButton);
+                tr.appendChild(actionTd);
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+        }
+    </script>
+</body>
+</html>
